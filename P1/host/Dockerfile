@@ -1,4 +1,4 @@
-# Image host: Alpine lui meme contient directement busybox
+# Image host : Alipine qui lui meme contient directement busybox
 FROM alpine:latest
 
 # Lance automatiquement un shell au run du conteneur
