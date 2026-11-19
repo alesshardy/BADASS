@@ -1,0 +1,31 @@
+#!/bin/sh
+# ===== routeur_apintus-1 : VTEP VXLAN en mode STATIQUE =====
+# Role : encapsuler le trafic L2 du host dans un tunnel VXLAN (VNI 10) vers
+#        l'autre VTEP, designe EXPLICITEMENT par son IP underlay (remote).
+# A coller dans la console GNS3 du routeur (aucune IP par defaut sur l'image).
+# Cablage GNS3 : eth0 -> host   |   eth1 -> Switch_apintus (underlay)
+
+# --- Underlay : reseau de transport entre les 2 routeurs (via Switch_apintus) ---
+ip addr add 10.1.1.1/24 dev eth1      # IP underlay de CE VTEP (face au switch)
+ip link set eth1 up
+
+# --- Interface VXLAN ---
+# id 10        : VNI (VXLAN Network Identifier) demande par le sujet
+# dev eth1     : interface underlay qui transporte le tunnel (face au switch)
+# remote       : IP underlay de l'AUTRE VTEP (statique = point a point)
+# dstport 4789 : port UDP standard du VXLAN (RFC 7348)
+ip link add vxlan10 type vxlan id 10 dev eth1 remote 10.1.1.2 dstport 4789
+
+# --- Bridge br0 : pont L2 entre le host (eth0) et le tunnel (vxlan10) ---
+ip link add br0 type bridge
+ip link set vxlan10 master br0        # rattache le tunnel au bridge
+ip link set eth0 master br0           # rattache l'interface vers le host
+
+# --- Activation de toutes les interfaces ---
+ip link set vxlan10 up
+ip link set eth0 up
+ip link set br0 up
+
+# Verification :
+#   ip -d link show vxlan10   -> affiche le VNI 10 et le remote 10.1.1.2
+#   bridge fdb show           -> table des MAC apprises via le tunnel

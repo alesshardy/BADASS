@@ -1,0 +1,10 @@
+#!/bin/sh
+# ===== host_apintus-1 : machine terminale dans le VXLAN (overlay) =====
+# Le host ne connait PAS le VXLAN : pour lui c'est un simple reseau L2.
+# Il communique avec host_apintus-2 comme s'ils etaient sur le meme switch.
+# Cablage GNS3 : eth0 -> routeur_apintus-1
+
+# IP overlay (meme sous-reseau que host_apintus-2), sur l'interface vers le routeur
+ifconfig eth0 30.1.1.1 netmask 255.255.255.0 up
+
+# Test : ping 30.1.1.2   (host_apintus-2 a travers le tunnel VXLAN)

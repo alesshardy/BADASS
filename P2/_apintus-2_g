@@ -1,0 +1,26 @@
+#!/bin/sh
+# ===== routeur_apintus-2 : VTEP VXLAN en mode MULTICAST dynamique =====
+# Miroir de routeur_apintus-1 : meme groupe multicast, seule l'IP underlay change.
+# Cablage GNS3 : eth0 -> host   |   eth1 -> Switch_apintus (underlay)
+
+# --- Underlay : reseau de transport entre les 2 routeurs (via Switch_apintus) ---
+ip addr add 10.1.1.2/24 dev eth1
+ip link set eth1 up
+
+# --- Interface VXLAN ---
+# Meme groupe 239.1.1.1 que l'autre VTEP (sinon ils ne se rejoignent pas)
+ip link add vxlan10 type vxlan id 10 dev eth1 group 239.1.1.1 dstport 4789
+
+# --- Bridge br0 : pont L2 entre le host (eth0) et le tunnel (vxlan10) ---
+ip link add br0 type bridge
+ip link set vxlan10 master br0
+ip link set eth0 master br0
+
+# --- Activation de toutes les interfaces ---
+ip link set vxlan10 up
+ip link set eth0 up
+ip link set br0 up
+
+# Verification :
+#   ip -d link show vxlan10   -> doit afficher "group 239.1.1.1"
+#   brctl showmacs br0
